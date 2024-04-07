@@ -37,6 +37,10 @@ def home():
             
             # Detect faces and get coordinates
             image = cv2.imread(file_path)
+            # Convert the image to max height 600 px
+            height, width = image.shape[:2]
+            scale = 600 / height
+            image = cv2.resize(image, (int(width * scale), 600))
             faces = face_detecting(image)
             face_data = [{'left': face.left(), 'top': face.top(), 'right': face.right(), 'bottom': face.bottom()} for face in faces]
 
