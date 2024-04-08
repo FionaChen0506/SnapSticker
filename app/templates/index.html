@@ -70,8 +70,21 @@
                         });
                         };
                     </script>
+
+                    <!-- Button to add stickers NOT DONE!!!-->
+                    <!-- <form action="/" method="post">
+                        <input type="hidden" name="add_stickers" value="true">
+                        <input type="hidden" name="uploaded_image" value="{{ uploaded_image }}">
+                        <input type="submit" value="Add Stickers" class="btn btn-primary">
+                    </form> -->
                     
                 {% endif %}
+
+                <!-- Display modified image  NOT DONE!!! -->
+                <!-- {% if modified_image_path %}
+                <h3>Modified Image:</h3>
+                <img src="{{ url_for('static', filename=modified_image_path) }}" class="img-fluid" alt="Modified Image">
+                {% endif %} -->
             </div>
 
             <div class="col-md-6">
@@ -85,12 +98,24 @@
                         <div class="col-12">
                             <h4>Animal Faces</h4>
                         </div>
-                        {% for sticker in ['fox.png', 'cat.png', 'deer.png', 'dog.png', 'pig.png', 'bear.png', 'rabbit.png', 'unicorn.png'] %}
+                        <!-- {% for sticker in ['fox.png', 'cat.png', 'deer.png', 'dog.png', 'pig.png', 'bear.png', 'rabbit.png', 'unicorn.png'] %}
                             <div class="col-6 col-sm-4 col-md-3 col-lg-1-5">
                                 <div class="card">
-                                    <img src="{{ url_for('static', filename='stickers/animal face/' + sticker) }}" class="card-img-top" alt="Animal Face">
+                                    <img src="{{ url_for('static', filename='stickers/animal face/' + sticker) }}" class="card-img-top" alt="Animal Face" style="max-height: 600px;">
                                 </div>
                             </div>
+                        {% endfor %} -->
+                        {% for sticker in ['fox.png', 'cat.png', 'deer.png', 'dog.png', 'pig.png', 'bear.png', 'rabbit.png', 'unicorn.png'] %}
+                        <div class="col-6 col-sm-4 col-md-3 col-lg-1-5">
+                            <form method="post" action="/" class="stickerForm">
+                                <input type="hidden" name="selected_sticker" value="{{ sticker }}">
+                                <button type="submit" class="stickerButton">
+                                    <div class="card">
+                                        <img src="{{ url_for('static', filename='stickers/animal face/' + sticker) }}" class="card-img-top sticker" alt="Animal Face">
+                                    </div>
+                                </button>
+                            </form>
+                        </div>
                         {% endfor %}
                     </div>
 
@@ -99,12 +124,17 @@
                             <h4>Ears</h4>
                         </div>
                         {% for sticker in ['bent-rabbit-ears.png', 'fluffy-bunny-ear.png', 'fluffy-pink-bunny.png', 'fox-ears.png', 'pink-bunny-ears.png', 'pink-bunny-ears-2.png', 'white-bunny-ears.png'] %}
-                            <div class="col-6 col-sm-4 col-md-3 col-lg-1-5">
-                                <div class="card">
-                                    <img src="{{ url_for('static', filename='stickers/ears/' + sticker) }}" class="card-img-top" alt="Animal Face">
-                                </div>
-                            </div>
-                        {% endfor %}
+                        <div class="col-6 col-sm-4 col-md-3 col-lg-1-5">
+                            <form method="post" action="/" class="stickerForm">
+                                <input type="hidden" name="selected_sticker" value="{{ sticker }}">
+                                <button type="submit" class="stickerButton">
+                                    <div class="card">
+                                        <img src="{{ url_for('static', filename='stickers/ears/' + sticker) }}" class="card-img-top sticker" alt="Ear Sticker" data-sticker-name="{{ sticker }}">
+                                    </div>
+                                </button>
+                            </form>
+                        </div>
+                    {% endfor %}
                     </div>
 
                     <div class="row">
@@ -112,12 +142,17 @@
                             <h4>Glasses</h4>
                         </div>
                         {% for sticker in ['blue-sunglasses.png', 'cool-sunglasses.png', 'gray-sunglasses.png', 'eyeglasses.png', 'heart-sunglasses.png', 'pink-sunglasses.png', 'rainbow-glasses.png', 'reading-eyeglasses.png', 'round-eyeglasses.png'] %}
-                            <div class="col-6 col-sm-4 col-md-3 col-lg-1-5">
-                                <div class="card">
-                                    <img src="{{ url_for('static', filename='stickers/glasses/' + sticker) }}" class="card-img-top" alt="Animal Face">
-                                </div>
-                            </div>
-                        {% endfor %}
+                        <div class="col-6 col-sm-4 col-md-3 col-lg-1-5">
+                            <form method="post" action="/" class="stickerForm">
+                                <input type="hidden" name="selected_sticker" value="{{ sticker }}">
+                                <button type="submit" class="stickerButton">
+                                    <div class="card">
+                                        <img src="{{ url_for('static', filename='stickers/glasses/' + sticker) }}" class="card-img-top sticker" alt="Glasses Sticker" data-sticker-name="{{ sticker }}">
+                                    </div>
+                                </button>
+                            </form>
+                        </div>
+                    {% endfor %}
                     </div>
 
                     <div class="row">
@@ -125,12 +160,17 @@
                             <h4>Noses</h4>
                         </div>
                         {% for sticker in ['clown-nose.png', 'pig-nose.png', 'tiger-nose.png'] %}
-                            <div class="col-6 col-sm-4 col-md-3 col-lg-1-5">
-                                <div class="card">
-                                    <img src="{{ url_for('static', filename='stickers/noses/' + sticker) }}" class="card-img-top" alt="Animal Face">
-                                </div>
-                            </div>
-                        {% endfor %}
+                        <div class="col-6 col-sm-4 col-md-3 col-lg-1-5">
+                            <form method="post" action="/" class="stickerForm">
+                                <input type="hidden" name="selected_sticker" value="{{ sticker }}">
+                                <button type="submit" class="stickerButton">
+                                    <div class="card">
+                                        <img src="{{ url_for('static', filename='stickers/noses/' + sticker) }}" class="card-img-top sticker" alt="Nose Sticker" data-sticker-name="{{ sticker }}">
+                                    </div>
+                                </button>
+                            </form>
+                        </div>
+                    {% endfor %}
                     </div>
 
                     <div class="row">
@@ -138,11 +178,16 @@
                             <h4>Hats</h4>
                         </div>
                         {% for sticker in ['chef-hat.png', 'Christmas-hat.png', 'graduation-hat.png', 'green-hat.png', 'magic-hat.png', 'party-hat.png', 'santa-hat.png', 'top-hat.png'] %}
-                            <div class="col-6 col-sm-4 col-md-3 col-lg-1-5">
-                                <div class="card">
-                                    <img src="{{ url_for('static', filename='stickers/hats/' + sticker) }}" class="card-img-top" alt="Animal Face">
-                                </div>
-                            </div>
+                        <div class="col-6 col-sm-4 col-md-3 col-lg-1-5">
+                            <form method="post" action="/" class="stickerForm">
+                                <input type="hidden" name="selected_sticker" value="{{ sticker }}">
+                                <button type="submit" class="stickerButton">
+                                    <div class="card">
+                                        <img src="{{ url_for('static', filename='stickers/hats/' + sticker) }}" class="card-img-top sticker" alt="Hat Sticker" data-sticker-name="{{ sticker }}">
+                                    </div>
+                                </button>
+                            </form>
+                        </div>
                         {% endfor %}
                     </div>
 
@@ -151,20 +196,26 @@
                             <h4>Headbands</h4>
                         </div>
                         {% for sticker in ['bear-headbands.png', 'cat-headband.png', 'christmas-headband.png', 'dear-ears.png', 'devil-headband.png', 'fox-ears.png', 'gray-bunny-ears.png', 'kitten-ears.png', 'rabbit.png'] %}
-                            <div class="col-6 col-sm-4 col-md-3 col-lg-1-5">
-                                <div class="card">
-                                    <img src="{{ url_for('static', filename='stickers/headbands/' + sticker) }}" class="card-img-top" alt="Animal Face">
-                                </div>
-                            </div>
-                        {% endfor %}
+                        <div class="col-6 col-sm-4 col-md-3 col-lg-1-5">
+                            <form method="post" action="/" class="stickerForm">
+                                <input type="hidden" name="selected_sticker" value="{{ sticker }}">
+                                <button type="submit" class="stickerButton">
+                                    <div class="card">
+                                        <img src="{{ url_for('static', filename='stickers/headbands/' + sticker) }}" class="card-img-top sticker" alt="Headband Sticker" data-sticker-name="{{ sticker }}">
+                                    </div>
+                                </button>
+                            </form>
+                        </div>
+                    {% endfor %}
                     </div>
-
+                    
                 </div>
+        
                 </div>
             
     </div>
 
-
+    
 </body>
 
 </html>

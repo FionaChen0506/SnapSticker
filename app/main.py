@@ -3,6 +3,7 @@ from werkzeug.utils import secure_filename
 import os
 import cv2
 import dlib
+from sticker_utils import add_ear_stickers
 
 app = Flask(__name__)
 
@@ -48,8 +49,18 @@ def home():
             web_path = os.path.join(UPLOAD_FOLDER, filename)
             return render_template("index.html", uploaded_image=web_path, face_data=face_data)
 
+            # if 'add_stickers' in request.form and request.form['add_stickers'] == 'true':
+            #     # uploaded_image_path = request.form['uploaded_image']
+            #     # # print("uploaded_image_path in main:", uploaded_image_path)
+            #     # full_image_path = os.path.join(app.root_path, 'static', uploaded_image_path)
+            #     # # print("Full image path:", full_image_path)  
+            #     # # Add ear stickers to the uploaded image
+            #     # modified_image_path = add_ear_stickers(full_image_path)
+                
+            # return render_template("index.html", uploaded_image=web_path, face_data=face_data, modified_image_path=web_path)
     return render_template("index.html", uploaded_image=None)
 
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
+
