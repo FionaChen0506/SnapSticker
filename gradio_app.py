@@ -100,6 +100,91 @@ def add_ears_sticker(img_bgr, sticker_path, faces):
         
     return img_with_stickers
 
+# Function to add eye stickers
+def add_glasses_sticker(img_bgr, sticker_path, faces):
+    glasses_pil = Image.open(sticker_path)
+
+    # Check the color mode and convert to RGBA    
+    glasses_rgba = glasses_pil.convert('RGBA')
+    
+    # Convert the ears_rgba to BGRA
+    r, g, b, a = glasses_rgba.split()
+    glasses_bgra = Image.merge("RGBA", (b, g, r, a))
+    
+
+    # A copy of the original image
+    img_with_stickers = img_bgr.copy()
+
+    for face in faces:
+        landmarks = face_landmarking(img_bgr, face)
+
+        # Assuming that the landmarks 36 to 41 are for the left eye, and 42 to 47 are for the right eye
+        left_eye = [landmarks.part(i) for i in range(37, 43)]
+        right_eye = [landmarks.part(i) for i in range(43, 49)]
+
+        # Calculate the bounding box for the glasses based on the eye landmarks
+        glasses_width = int(abs(left_eye[0].x - right_eye[3].x)*1.9)
+        glasses_height = int(glasses_width * glasses_bgra.height / glasses_bgra.width)
+
+
+        # Resize the glasses image
+        resized_glasses = glasses_bgra.resize((glasses_width, glasses_height))
+        
+        # Calculate the position for the glasses
+        y1 = min([point.y for point in left_eye + right_eye]) - int(0.4 * glasses_height)
+        y2 = y1 + glasses_height
+        x1 = (left_eye[0].x) - int(0.2 * glasses_width)
+        x2 = x1 + glasses_width
+
+        # Convert PIL image to NumPy array
+        glasses_np = np.array(resized_glasses)
+        
+        # Overlay the ears on the image
+        img_with_stickers = overlay_transparent(img_with_stickers, glasses_np, x1, y1)
+        
+    return img_with_stickers
+
+
+
+def add_noses_sticker(img_bgr, sticker_path, faces):
+    nose_pil = Image.open(sticker_path)
+
+    # Check the color mode and convert to RGBA    
+    nose_rgba = nose_pil.convert('RGBA')
+    
+    # Convert the nose_rgba to BGRA
+    r, g, b, a = nose_rgba.split()
+    nose_bgra = Image.merge("RGBA", (b, g, r, a))
+
+    # A copy of the original image
+    img_with_stickers = img_bgr.copy()
+
+    for face in faces:
+        landmarks = face_landmarking(img_bgr, face)
+
+        # Assuming that the landmarks 27 to 35 are for the nose area
+        nose_area = [landmarks.part(i) for i in range(28, 36)]
+
+        # Calculate the bounding box for the nose based on the nose landmarks
+        nose_width = int(abs(nose_area[0].x - nose_area[-1].x) * 1.8)
+        nose_height = int(nose_width * nose_bgra.height / nose_bgra.width)
+
+        # Resize the nose image
+        resized_nose_pil = nose_bgra.resize((nose_width, nose_height))
+        
+        # Calculate the position for the nose
+        y1 = min([point.y for point in nose_area]) - int(0.02 * nose_height)
+        y2 = y1 + nose_height
+        x1 = min([point.x for point in nose_area]) - int(0.1 * nose_width)
+        x2 = x1 + nose_width
+
+        # Convert PIL image to NumPy array
+        nose_np = np.array(resized_nose_pil)
+        
+        # Overlay the nose on the image
+        img_with_stickers = overlay_transparent(img_with_stickers, nose_np, x1, y1)
+        
+    return img_with_stickers
 
 
 # Function to process the image
@@ -109,6 +194,7 @@ def process_image(image, sticker_choice):
         sticker_name = sticker_choice + '.png'
         # find sticker's category
         sticker_category = STICKER_TO_CATEGORY[sticker_name]
+        print('sticker_category', sticker_category)
         # Path to the single sticker
         sticker_path = os.path.join('stickers',sticker_category, sticker_name)
 
@@ -118,9 +204,15 @@ def process_image(image, sticker_choice):
         # Detect faces
         faces = face_detecting(image_bgr)
         
-        # Add ear stickers
-        img_with_stickers = add_ears_sticker(image_bgr, sticker_path, faces)
-
+        if sticker_category == 'ears':
+            # Add ear stickers
+            img_with_stickers = add_ears_sticker(image_bgr, sticker_path, faces)
+        if sticker_category == 'glasses':
+            img_with_stickers = add_glasses_sticker(image_bgr, sticker_path, faces)
+        if sticker_category == 'noses':
+            img_with_stickers = add_noses_sticker(image_bgr, sticker_path, faces)
+        else:
+            img_with_stickers = add_ears_sticker(image_bgr, sticker_path, faces)
         # Convert back to PIL image
         img_with_stickers_pil = Image.fromarray(cv2.cvtColor(img_with_stickers, cv2.COLOR_BGR2RGB))
         return img_with_stickers_pil
