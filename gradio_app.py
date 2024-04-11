@@ -163,7 +163,7 @@ def add_noses_sticker(img_bgr, sticker_path, faces):
         landmarks = face_landmarking(img_bgr, face)
 
         # Assuming that the landmarks 27 to 35 are for the nose area
-        nose_area = [landmarks.part(i) for i in range(28, 36)]
+        nose_area = [landmarks.part(i) for i in range(27, 36)]
 
         # Calculate the bounding box for the nose based on the nose landmarks
         nose_width = int(abs(nose_area[0].x - nose_area[-1].x) * 1.8)
@@ -173,7 +173,7 @@ def add_noses_sticker(img_bgr, sticker_path, faces):
         resized_nose_pil = nose_bgra.resize((nose_width, nose_height))
         
         # Calculate the position for the nose
-        y1 = min([point.y for point in nose_area]) - int(0.02 * nose_height)
+        y1 = min([point.y for point in nose_area]) + int(0.3 * nose_height)
         y2 = y1 + nose_height
         x1 = min([point.x for point in nose_area]) - int(0.1 * nose_width)
         x2 = x1 + nose_width
@@ -202,7 +202,7 @@ def process_image(image, sticker_choice):
 
         # Detect faces
         faces = face_detecting(image_bgr)
-        print(sticker_category)
+        # print(sticker_category)
         if sticker_category == 'ears':
             # Add ear stickers
             img_with_stickers = add_ears_sticker(image_bgr, sticker_path, faces)
@@ -220,8 +220,56 @@ def process_image(image, sticker_choice):
     else:
         return image
 
+def process_image_with_selections(image_input):
+    # print("Selected stickers:")
+    # for category, selection in sticker_selections.items():
+    #     print(f"{category}: {selection}")
 
+    # return image
+    # Convert PIL image to OpenCV format BGR
+    image_bgr = cv2.cvtColor(np.array(image_input), cv2.COLOR_RGB2BGR)
 
+    # Detect faces
+    faces = face_detecting(image_bgr)
+    
+    # A copy of the original image to apply stickers on
+    img_with_stickers = image_bgr.copy()
+
+    for category, sticker_name in sticker_selections.items():
+        if sticker_name:  # Check if a sticker was selected in this category
+            # the sticker file path
+            sticker_path = os.path.join('stickers', category, sticker_name + '.png')
+
+            # Apply the selected sticker based on its category
+            if category == 'ears':
+                img_with_stickers = add_ears_sticker(img_with_stickers, sticker_path, faces)
+            elif category == 'glasses':
+                img_with_stickers = add_glasses_sticker(img_with_stickers, sticker_path, faces)
+            elif category == 'noses':
+                img_with_stickers = add_noses_sticker(img_with_stickers, sticker_path, faces)
+            elif category == 'headbands':
+                img_with_stickers = add_ears_sticker(img_with_stickers, sticker_path, faces)
+            elif category == 'hats':
+                img_with_stickers = add_ears_sticker(img_with_stickers, sticker_path, faces)
+            else:
+                img_with_stickers = img_with_stickers
+    # Convert back to PIL image
+    img_with_stickers_pil = Image.fromarray(cv2.cvtColor(img_with_stickers, cv2.COLOR_BGR2RGB))
+    
+    print("Selected stickers:")
+    for category, selection in sticker_selections.items():
+        print(f"{category}: {selection}")
+
+    return img_with_stickers_pil
+
+# This dictionary will hold the user's sticker selections
+sticker_selections = {}
+
+# Function to update sticker selections
+def update_selections(category, selection):
+    # sticker_selections[category] = selection
+    sticker_selections[category] = None if selection == "None" else selection
+    return ""
 
 
 # Create the Gradio interface
@@ -246,8 +294,13 @@ with gr.Blocks() as demo:
                         for sticker_path in stickers[i:i+10]:
                             gr.Image(value=sticker_path, height=130, width=500, min_width=30, interactive=False, show_download_button=False, container=False)  # Sticker image
                 with gr.Row():
-                    radio = gr.Radio(label=' ', choices=[stickers[i].split('/')[-1].replace('.png', '') for i in range(len(stickers))], container=False, min_width=50)
-                    radio.change(process_image, inputs=[image_input, radio], outputs=output_image)
+                    # radio = gr.Radio(label=' ', choices=[stickers[i].split('/')[-1].replace('.png', '') for i in range(len(stickers))], container=False, min_width=50)
+                    choices = ["None"] + [sticker.split('/')[-1].replace('.png', '') for sticker in stickers]
+                    radio = gr.Radio(label=' ', choices=choices, value="None", container=False, min_width=50)
+                    radio.change(lambda selection, cat=category: update_selections(cat, selection), inputs=[radio], outputs=[])
+    # Button to apply all selected stickers
+    apply_btn = gr.Button("Apply Stickers")
+    apply_btn.click(process_image_with_selections, inputs=[image_input], outputs=output_image)
 
 demo.launch()
 
