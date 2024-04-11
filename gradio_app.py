@@ -194,7 +194,6 @@ def process_image(image, sticker_choice):
         sticker_name = sticker_choice + '.png'
         # find sticker's category
         sticker_category = STICKER_TO_CATEGORY[sticker_name]
-        print('sticker_category', sticker_category)
         # Path to the single sticker
         sticker_path = os.path.join('stickers',sticker_category, sticker_name)
 
@@ -203,16 +202,18 @@ def process_image(image, sticker_choice):
 
         # Detect faces
         faces = face_detecting(image_bgr)
-        
+        print(sticker_category)
         if sticker_category == 'ears':
             # Add ear stickers
             img_with_stickers = add_ears_sticker(image_bgr, sticker_path, faces)
-        if sticker_category == 'glasses':
+        elif sticker_category == 'glasses':
             img_with_stickers = add_glasses_sticker(image_bgr, sticker_path, faces)
-        if sticker_category == 'noses':
+        elif sticker_category == 'noses':
             img_with_stickers = add_noses_sticker(image_bgr, sticker_path, faces)
-        else:
+        elif sticker_category == 'headbands':
             img_with_stickers = add_ears_sticker(image_bgr, sticker_path, faces)
+        else:
+            img_with_stickers = add_glasses_sticker(image_bgr, sticker_path, faces)
         # Convert back to PIL image
         img_with_stickers_pil = Image.fromarray(cv2.cvtColor(img_with_stickers, cv2.COLOR_BGR2RGB))
         return img_with_stickers_pil

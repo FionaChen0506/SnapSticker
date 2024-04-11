@@ -4,7 +4,7 @@ STICKER_PATHS = {'hats': ['./stickers/hats/santa-hat.png', './stickers/hats/top-
                 'ears': ['./stickers/ears/pink-bunny-ears.png', './stickers/ears/fox-ears.png', './stickers/ears/fluffy-bunny-ear.png', './stickers/ears/fluffy-pink-bunny.png', './stickers/ears/tiger-ear.png', './stickers/ears/white-bunny-ears.png', './stickers/ears/bent-rabbit-ears.png', './stickers/ears/pink-bunny-ears-2.png'], 
                 'glasses': ['./stickers/glasses/heart-sunglasses.png', './stickers/glasses/round-eyeglasses.png', './stickers/glasses/pink-sunglasses.png', './stickers/glasses/cool-sunglasses.png', './stickers/glasses/gray-sunglasses.png', './stickers/glasses/blue-sunglasses.png', './stickers/glasses/rainbow-glasses.png', './stickers/glasses/reading-eyeglasses.png'], 
                 'noses': ['./stickers/noses/dog-nose.png', './stickers/noses/pig-nose.png', './stickers/noses/clown-nose.png', './stickers/noses/dog-nose4.png', './stickers/noses/dog-nose5.png', './stickers/noses/dog-nose6.png', './stickers/noses/dog-nose2.png', './stickers/noses/dog-nose3.png'], 
-                'headbands': ['./stickers/headbands/dear-ears.png', './stickers/headbands/gray-bunny-ears.png', './stickers/headbands/fox-ears.png', './stickers/headbands/kitten-ears.png', './stickers/headbands/devil-headband.png', './stickers/headbands/cat-headband.png', './stickers/headbands/christmas-headband.png', './stickers/headbands/bear-headbands.png']}
+                'headbands': ['./stickers/headbands/dear-ears.png', './stickers/headbands/gray-bunny-ears.png', './stickers/headbands/bunny-headband.png', './stickers/headbands/kitten-ears.png', './stickers/headbands/devil-headband.png', './stickers/headbands/cat-headband.png', './stickers/headbands/christmas-headband.png', './stickers/headbands/bear-headbands.png']}
 
 
 
@@ -27,7 +27,7 @@ STICKER_TO_CATEGORY = {'santa-hat.png': 'hats',
 'pig.png': 'animal face',
 'bear.png': 'animal face',
 'pink-bunny-ears.png': 'ears',
-'fox-ears.png': 'headbands',
+'fox-ears.png': 'ears',
 'fluffy-bunny-ear.png': 'ears',
 'fluffy-pink-bunny.png': 'ears',
 'tiger-ear.png': 'ears',
@@ -52,6 +52,7 @@ STICKER_TO_CATEGORY = {'santa-hat.png': 'hats',
 'dog-nose3.png': 'noses',
 'dear-ears.png': 'headbands',
 'gray-bunny-ears.png': 'headbands',
+'bunny-headband.png': 'headbands',
 'kitten-ears.png': 'headbands',
 'devil-headband.png': 'headbands',
 'cat-headband.png': 'headbands',
