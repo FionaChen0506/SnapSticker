@@ -59,6 +59,30 @@ def overlay_transparent(background, overlay, x, y):
     return background
 
 
+def calculate_eye_angle(landmarks, left_eye_indices, right_eye_indices):
+
+    # Calculate the center point of the left eye
+    left_eye_center = (
+        sum([landmarks.part(i).x for i in left_eye_indices]) // len(left_eye_indices),
+        sum([landmarks.part(i).y for i in left_eye_indices]) // len(left_eye_indices)
+    )
+
+    # Calculate the center point of the right eye
+    right_eye_center = (
+        sum([landmarks.part(i).x for i in right_eye_indices]) // len(right_eye_indices),
+        sum([landmarks.part(i).y for i in right_eye_indices]) // len(right_eye_indices)
+    )
+
+    # Calculate the differences in the x and y coordinates between the centers of the eyes
+    dx = right_eye_center[0] - left_eye_center[0]
+    dy = right_eye_center[1] - left_eye_center[1]
+
+    # Calculate the angle using the arctangent of the differences
+    angle = math.degrees(math.atan2(dy, dx))
+
+    return angle
+
+
 # Function to add ear stickers
 def add_ears_sticker(img_bgr, sticker_path, faces):
     ears_pil = Image.open(sticker_path)
@@ -148,7 +172,7 @@ def add_hats_sticker(img_bgr, sticker_path, faces):
         angle = math.degrees(math.atan2(dy, dx))  
 
         # Calculate the size of the hat based on the width between the eyes
-        hat_width = int(abs(left_eye[0].x - right_eye[3].x) * 1.5)
+        hat_width = int(abs(left_eye[0].x - right_eye[3].x) * 1.7)
         hat_height = int(hat_width * hat_bgra.height / hat_bgra.width)
 
         # Resize and rotate the hat image
@@ -189,7 +213,7 @@ def add_headbands_sticker(img_bgr, sticker_path, faces):
         right_temple = landmarks.part(16) 
 
         # Calculate the width of the headband based on the temples
-        headband_width = int(abs(left_temple.x - right_temple.x) * 1.3) # Adjust scale as needed
+        headband_width = int(abs(left_temple.x - right_temple.x) * 1.6)
         headband_height = int(headband_width * headband_bgra.height / headband_bgra.width)
 
         # Resize the headband image
@@ -205,7 +229,7 @@ def add_headbands_sticker(img_bgr, sticker_path, faces):
 
         # Calculate the position for the headband
         x1 = (left_temple.x + right_temple.x) // 2 - (headband_width // 2)
-        y1 = left_temple.y - (headband_height // 2) # Adjust as needed
+        y1 = left_temple.y - (headband_height // 2) 
 
         # Convert PIL image to NumPy array
         headband_np = np.array(rotated_headband)
@@ -216,97 +240,7 @@ def add_headbands_sticker(img_bgr, sticker_path, faces):
     return img_with_stickers
 
 
-# # Function to add headbands stickers
-# def add_headbands_sticker(img_bgr, sticker_path, faces):
-#     headband_pil = Image.open(sticker_path)
-
-#     # Check the color mode and convert to RGBA
-#     headband_rgba = headband_pil.convert('RGBA')
-    
-#     # Convert the headband_rgba to BGRA
-#     r, g, b, a = headband_rgba.split()
-#     headband_bgra = Image.merge("RGBA", (b, g, r, a))
-    
-#     # A copy of the original image
-#     img_with_stickers = img_bgr.copy()
-
-#     for face in faces:
-#         landmarks = face_landmarking(img_bgr, face)
-
-#         #the landmarks 36 to 41 are for the left eye, and 42 to 47 are for the right eye
-#         left_eye = [landmarks.part(i) for i in range(36, 42)]
-#         right_eye = [landmarks.part(i) for i in range(42, 48)]
-
-#         # Calculate the center point between the eyes
-#         left_eye_center = ((left_eye[0].x + left_eye[3].x) // 2, (left_eye[0].y + left_eye[3].y) // 2)
-#         right_eye_center = ((right_eye[0].x + right_eye[3].x) // 2, (right_eye[0].y + right_eye[3].y) // 2)
-#         eye_center_x = (left_eye_center[0] + right_eye_center[0]) // 2
-#         eye_center_y = (left_eye_center[1] + right_eye_center[1]) // 2
-
-#         # Calculate the size of the headband based on the width between the eyes
-#         headband_width = int(abs(left_eye[0].x - right_eye[3].x) * 1.8)
-#         headband_height = int(headband_width * headband_bgra.height / headband_bgra.width)
-
-#         # Resize the headband image
-#         resized_headband = headband_bgra.resize((headband_width, headband_height))
-
-#         # Calculate the position for the headband
-#         # y1 = eye_center_y - headband_height  # Placing the bottom of the headband at eye level
-#         y1 = eye_center_y - headband_height - int(0.3 * headband_height)
-#         x1 = eye_center_x - (headband_width // 2)  # Centering the headband on the midpoint between the eyes
-
-#         # Convert PIL image to NumPy array
-#         headband_np = np.array(resized_headband)
-
-#         # Overlay the headband on the image
-#         img_with_stickers = overlay_transparent(img_with_stickers, headband_np, x1, y1)
-
-#     return img_with_stickers
-
 # Function to add glasses stickers
-# def add_glasses_sticker(img_bgr, sticker_path, faces):
-#     glasses_pil = Image.open(sticker_path)
-
-#     # Check the color mode and convert to RGBA    
-#     glasses_rgba = glasses_pil.convert('RGBA')
-    
-#     # Convert the glasses_rgba to BGRA
-#     r, g, b, a = glasses_rgba.split()
-#     glasses_bgra = Image.merge("RGBA", (b, g, r, a))
-    
-
-#     # A copy of the original image
-#     img_with_stickers = img_bgr.copy()
-
-#     for face in faces:
-#         landmarks = face_landmarking(img_bgr, face)
-
-#         # the landmarks 36 to 41 are for the left eye, and 42 to 47 are for the right eye
-#         left_eye = [landmarks.part(i) for i in range(37, 43)]
-#         right_eye = [landmarks.part(i) for i in range(43, 49)]
-
-#         # Calculate the bounding box for the glasses based on the eye landmarks
-#         glasses_width = int(abs(left_eye[0].x - right_eye[3].x)*1.9)
-#         glasses_height = int(glasses_width * glasses_bgra.height / glasses_bgra.width)
-
-
-#         # Resize the glasses image
-#         resized_glasses = glasses_bgra.resize((glasses_width, glasses_height))
-        
-#         # Calculate the position for the glasses
-#         y1 = min([point.y for point in left_eye + right_eye]) - int(0.4 * glasses_height)
-#         y2 = y1 + glasses_height
-#         x1 = (left_eye[0].x) - int(0.2 * glasses_width)
-#         x2 = x1 + glasses_width
-
-#         # Convert PIL image to NumPy array
-#         glasses_np = np.array(resized_glasses)
-        
-#         # Overlay the glasses on the image
-#         img_with_stickers = overlay_transparent(img_with_stickers, glasses_np, x1, y1)
-        
-#     return img_with_stickers
-
 def add_glasses_sticker(img_bgr, sticker_path, faces):
     glasses_pil = Image.open(sticker_path)
 
@@ -398,6 +332,51 @@ def add_noses_sticker(img_bgr, sticker_path, faces):
         
     return img_with_stickers
 
+def add_animal_faces_sticker(img_bgr, sticker_path, faces):
+    animal_face_pil = Image.open(sticker_path)
+
+    # Check the color mode and convert to RGBA
+    animal_face_rgba = animal_face_pil.convert('RGBA')
+    
+    # Convert the animal_face_rgba to BGRA
+    r, g, b, a = animal_face_rgba.split()
+    animal_face_bgra = Image.merge("RGBA", (b, g, r, a))
+    
+    # A copy of the original image
+    img_with_stickers = img_bgr.copy()
+
+    for face in faces:
+        landmarks = face_landmarking(img_bgr, face)
+
+        # Find the top of the forehead using landmarks above the eyes
+        # Assuming landmarks 19 to 24 represent the eyebrows
+        forehead_top = min(landmarks.part(i).y for i in range(68, 81)) 
+
+        # Calculate the center point between the eyes as an anchor
+        left_eye = [landmarks.part(i) for i in range(36, 42)]
+        right_eye = [landmarks.part(i) for i in range(42, 48)]
+        eye_center_x = (left_eye[0].x + right_eye[3].x) // 2
+        eye_center_y = (left_eye[3].y + right_eye[0].y) // 2
+
+        # Calculate the size of the animal face sticker based on the width between the temples
+        head_width = int(abs(landmarks.part(0).x - landmarks.part(16).x)*1.1) #1.5
+        head_height = int(head_width * animal_face_bgra.height / animal_face_bgra.width)
+
+        # Resize the animal face sticker
+        resized_animal_face = animal_face_bgra.resize((head_width, head_height))
+
+        # Calculate the position for the animal face sticker
+        x1 = eye_center_x - (head_width // 2)
+        y1 = forehead_top - int(0.18 * head_height)
+
+        # Convert PIL image to NumPy array
+        animal_face_np = np.array(resized_animal_face)
+
+        # Overlay the animal face on the image
+        img_with_stickers = overlay_transparent(img_with_stickers, animal_face_np, x1, y1)
+
+    return img_with_stickers
+
 
 # Function to process the image
 def process_image(image, sticker_choice):
@@ -458,7 +437,7 @@ def process_image_with_selections(image_input):
             elif category == 'hats':
                 img_with_stickers = add_hats_sticker(img_with_stickers, sticker_path, faces)
             elif category == 'animal face':
-                img_with_stickers = add_glasses_sticker(img_with_stickers, sticker_path, faces)
+                img_with_stickers = add_animal_faces_sticker(img_with_stickers, sticker_path, faces)
             else:
                 img_with_stickers = img_with_stickers
     # Convert back to PIL image
