@@ -76,7 +76,7 @@ def add_ears_sticker(img_bgr, sticker_path, faces):
     for face in faces:
         landmarks = face_landmarking(img_bgr, face)
 
-        # Assuming that the landmarks 68 to 80 are for the forehead
+        # the landmarks 68 to 80 are for the forehead
         forehead = [landmarks.part(i) for i in range(68, 81)]
 
         # Calculate the bounding box for the ears based on the eye landmarks
@@ -100,14 +100,62 @@ def add_ears_sticker(img_bgr, sticker_path, faces):
         
     return img_with_stickers
 
-# Function to add eye stickers
+# # Function to add hats stickers
+def add_hats_sticker(img_bgr, sticker_path, faces):
+    hat_pil = Image.open(sticker_path)
+
+    # Check the color mode and convert to RGBA
+    hat_rgba = hat_pil.convert('RGBA')
+    
+    # Convert the hat_rgba to BGRA
+    r, g, b, a = hat_rgba.split()
+    hat_bgra = Image.merge("RGBA", (b, g, r, a))
+    
+    # A copy of the original image
+    img_with_stickers = img_bgr.copy()
+
+    for face in faces:
+        landmarks = face_landmarking(img_bgr, face)
+
+        #the landmarks 36 to 41 are for the left eye, and 42 to 47 are for the right eye
+        left_eye = [landmarks.part(i) for i in range(36, 42)]
+        right_eye = [landmarks.part(i) for i in range(42, 48)]
+
+        # Calculate the center point between the eyes
+        left_eye_center = ((left_eye[0].x + left_eye[3].x) // 2, (left_eye[0].y + left_eye[3].y) // 2)
+        right_eye_center = ((right_eye[0].x + right_eye[3].x) // 2, (right_eye[0].y + right_eye[3].y) // 2)
+        eye_center_x = (left_eye_center[0] + right_eye_center[0]) // 2
+        eye_center_y = (left_eye_center[1] + right_eye_center[1]) // 2
+
+        # Calculate the size of the hat based on the width between the eyes
+        hat_width = int(abs(left_eye[0].x - right_eye[3].x) * 1.5)
+        hat_height = int(hat_width * hat_bgra.height / hat_bgra.width)
+
+        # Resize the hat image
+        resized_hat = hat_bgra.resize((hat_width, hat_height))
+
+        # Calculate the position for the hat
+        # y1 = eye_center_y - hat_height  # Placing the bottom of the hat at eye level
+        y1 = eye_center_y - hat_height - int(0.3 * hat_height)
+        x1 = eye_center_x - (hat_width // 2)  # Centering the hat on the midpoint between the eyes
+
+        # Convert PIL image to NumPy array
+        hat_np = np.array(resized_hat)
+
+        # Overlay the hat on the image
+        img_with_stickers = overlay_transparent(img_with_stickers, hat_np, x1, y1)
+
+    return img_with_stickers
+
+
+# Function to add glasses stickers
 def add_glasses_sticker(img_bgr, sticker_path, faces):
     glasses_pil = Image.open(sticker_path)
 
     # Check the color mode and convert to RGBA    
     glasses_rgba = glasses_pil.convert('RGBA')
     
-    # Convert the ears_rgba to BGRA
+    # Convert the glasses_rgba to BGRA
     r, g, b, a = glasses_rgba.split()
     glasses_bgra = Image.merge("RGBA", (b, g, r, a))
     
@@ -118,7 +166,7 @@ def add_glasses_sticker(img_bgr, sticker_path, faces):
     for face in faces:
         landmarks = face_landmarking(img_bgr, face)
 
-        # Assuming that the landmarks 36 to 41 are for the left eye, and 42 to 47 are for the right eye
+        # the landmarks 36 to 41 are for the left eye, and 42 to 47 are for the right eye
         left_eye = [landmarks.part(i) for i in range(37, 43)]
         right_eye = [landmarks.part(i) for i in range(43, 49)]
 
@@ -139,7 +187,7 @@ def add_glasses_sticker(img_bgr, sticker_path, faces):
         # Convert PIL image to NumPy array
         glasses_np = np.array(resized_glasses)
         
-        # Overlay the ears on the image
+        # Overlay the glasses on the image
         img_with_stickers = overlay_transparent(img_with_stickers, glasses_np, x1, y1)
         
     return img_with_stickers
@@ -204,7 +252,6 @@ def process_image(image, sticker_choice):
         faces = face_detecting(image_bgr)
         # print(sticker_category)
         if sticker_category == 'ears':
-            # Add ear stickers
             img_with_stickers = add_ears_sticker(image_bgr, sticker_path, faces)
         elif sticker_category == 'glasses':
             img_with_stickers = add_glasses_sticker(image_bgr, sticker_path, faces)
@@ -250,7 +297,9 @@ def process_image_with_selections(image_input):
             elif category == 'headbands':
                 img_with_stickers = add_ears_sticker(img_with_stickers, sticker_path, faces)
             elif category == 'hats':
-                img_with_stickers = add_ears_sticker(img_with_stickers, sticker_path, faces)
+                img_with_stickers = add_hats_sticker(img_with_stickers, sticker_path, faces)
+            elif category == 'animal face':
+                img_with_stickers = add_glasses_sticker(img_with_stickers, sticker_path, faces)
             else:
                 img_with_stickers = img_with_stickers
     # Convert back to PIL image
@@ -271,6 +320,9 @@ def update_selections(category, selection):
     sticker_selections[category] = None if selection == "None" else selection
     return ""
 
+# Function to load an example image
+def load_example_image(image_path):
+    return gr.Image.from_file(image_path)
 
 # Create the Gradio interface
 with gr.Blocks() as demo:
@@ -281,6 +333,7 @@ with gr.Blocks() as demo:
         with gr.Column():
             output_image = gr.Image(label="Image with Stickers")
     
+
         
     # Iterate over each category to create a row for the category
     for category, stickers in STICKER_PATHS.items():
@@ -302,6 +355,15 @@ with gr.Blocks() as demo:
     apply_btn = gr.Button("Apply Stickers")
     apply_btn.click(process_image_with_selections, inputs=[image_input], outputs=output_image)
 
+    # # List of example images
+    # examples = [
+    #     ["./example_images/Herminone.jpg"],
+    #     ["./example_images/3-people.jpg"],
+    #     ["./example_images/multi.png"]
+    # ]
+
+    # # Adding an Examples component to allow users to load example images
+    # demo.examples(examples, inputs=[image_input])
 demo.launch()
 
 
