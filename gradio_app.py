@@ -103,7 +103,7 @@ def add_ears_sticker(img_bgr, sticker_path, faces):
         rotated_ears = resized_ears_pil.rotate(-angle, expand=True, resample=Image.BICUBIC)
         
         # Calculate the position for the ears
-        y1 = min([point.y for point in forehead]) - int(0.6 * ears_width)
+        y1 = min([point.y for point in forehead]) - int(0.7 * ears_height)
         x1 = forehead[0].x - int(0.2 * ears_width) 
 
         # Convert PIL image to NumPy array
@@ -148,7 +148,7 @@ def add_hats_sticker(img_bgr, sticker_path, faces):
         angle = math.degrees(math.atan2(dy, dx))  
 
         # Calculate the size of the hat based on the width between the eyes
-        hat_width = int(abs(left_eye[0].x - right_eye[3].x) * 1.6)
+        hat_width = int(abs(left_eye[0].x - right_eye[3].x) * 1.5)
         hat_height = int(hat_width * hat_bgra.height / hat_bgra.width)
 
         # Resize and rotate the hat image
@@ -167,7 +167,6 @@ def add_hats_sticker(img_bgr, sticker_path, faces):
 
     return img_with_stickers
 
-# # Function to add headbands stickers
 def add_headbands_sticker(img_bgr, sticker_path, faces):
     headband_pil = Image.open(sticker_path)
 
@@ -184,35 +183,85 @@ def add_headbands_sticker(img_bgr, sticker_path, faces):
     for face in faces:
         landmarks = face_landmarking(img_bgr, face)
 
-        #the landmarks 36 to 41 are for the left eye, and 42 to 47 are for the right eye
-        left_eye = [landmarks.part(i) for i in range(36, 42)]
-        right_eye = [landmarks.part(i) for i in range(42, 48)]
+        # Determine the forehead region using landmarks
+        # Assuming the headband will be placed between the temples
+        left_temple = landmarks.part(0)   
+        right_temple = landmarks.part(16) 
 
-        # Calculate the center point between the eyes
-        left_eye_center = ((left_eye[0].x + left_eye[3].x) // 2, (left_eye[0].y + left_eye[3].y) // 2)
-        right_eye_center = ((right_eye[0].x + right_eye[3].x) // 2, (right_eye[0].y + right_eye[3].y) // 2)
-        eye_center_x = (left_eye_center[0] + right_eye_center[0]) // 2
-        eye_center_y = (left_eye_center[1] + right_eye_center[1]) // 2
-
-        # Calculate the size of the headband based on the width between the eyes
-        headband_width = int(abs(left_eye[0].x - right_eye[3].x) * 1.8)
+        # Calculate the width of the headband based on the temples
+        headband_width = int(abs(left_temple.x - right_temple.x) * 1.3) # Adjust scale as needed
         headband_height = int(headband_width * headband_bgra.height / headband_bgra.width)
 
         # Resize the headband image
         resized_headband = headband_bgra.resize((headband_width, headband_height))
 
+        # Calculate the angle of tilt using the eyes as reference
+        left_eye_indices = range(36, 42)
+        right_eye_indices = range(42, 48)
+        angle = calculate_eye_angle(landmarks, left_eye_indices, right_eye_indices)
+
+        # Rotate the headband image
+        rotated_headband = resized_headband.rotate(-angle, expand=True, resample=Image.BICUBIC)
+
         # Calculate the position for the headband
-        # y1 = eye_center_y - headband_height  # Placing the bottom of the headband at eye level
-        y1 = eye_center_y - headband_height - int(0.3 * headband_height)
-        x1 = eye_center_x - (headband_width // 2)  # Centering the headband on the midpoint between the eyes
+        x1 = (left_temple.x + right_temple.x) // 2 - (headband_width // 2)
+        y1 = left_temple.y - (headband_height // 2) # Adjust as needed
 
         # Convert PIL image to NumPy array
-        headband_np = np.array(resized_headband)
+        headband_np = np.array(rotated_headband)
 
         # Overlay the headband on the image
         img_with_stickers = overlay_transparent(img_with_stickers, headband_np, x1, y1)
 
     return img_with_stickers
+
+
+# # Function to add headbands stickers
+# def add_headbands_sticker(img_bgr, sticker_path, faces):
+#     headband_pil = Image.open(sticker_path)
+
+#     # Check the color mode and convert to RGBA
+#     headband_rgba = headband_pil.convert('RGBA')
+    
+#     # Convert the headband_rgba to BGRA
+#     r, g, b, a = headband_rgba.split()
+#     headband_bgra = Image.merge("RGBA", (b, g, r, a))
+    
+#     # A copy of the original image
+#     img_with_stickers = img_bgr.copy()
+
+#     for face in faces:
+#         landmarks = face_landmarking(img_bgr, face)
+
+#         #the landmarks 36 to 41 are for the left eye, and 42 to 47 are for the right eye
+#         left_eye = [landmarks.part(i) for i in range(36, 42)]
+#         right_eye = [landmarks.part(i) for i in range(42, 48)]
+
+#         # Calculate the center point between the eyes
+#         left_eye_center = ((left_eye[0].x + left_eye[3].x) // 2, (left_eye[0].y + left_eye[3].y) // 2)
+#         right_eye_center = ((right_eye[0].x + right_eye[3].x) // 2, (right_eye[0].y + right_eye[3].y) // 2)
+#         eye_center_x = (left_eye_center[0] + right_eye_center[0]) // 2
+#         eye_center_y = (left_eye_center[1] + right_eye_center[1]) // 2
+
+#         # Calculate the size of the headband based on the width between the eyes
+#         headband_width = int(abs(left_eye[0].x - right_eye[3].x) * 1.8)
+#         headband_height = int(headband_width * headband_bgra.height / headband_bgra.width)
+
+#         # Resize the headband image
+#         resized_headband = headband_bgra.resize((headband_width, headband_height))
+
+#         # Calculate the position for the headband
+#         # y1 = eye_center_y - headband_height  # Placing the bottom of the headband at eye level
+#         y1 = eye_center_y - headband_height - int(0.3 * headband_height)
+#         x1 = eye_center_x - (headband_width // 2)  # Centering the headband on the midpoint between the eyes
+
+#         # Convert PIL image to NumPy array
+#         headband_np = np.array(resized_headband)
+
+#         # Overlay the headband on the image
+#         img_with_stickers = overlay_transparent(img_with_stickers, headband_np, x1, y1)
+
+#     return img_with_stickers
 
 # Function to add glasses stickers
 # def add_glasses_sticker(img_bgr, sticker_path, faces):
