@@ -560,6 +560,12 @@ def handle_face_selection(image_input, *checkbox_states):
     print("selected_face_indices:",selected_face_indices)
     return process_selected_faces(image_input, selected_face_indices)
 
+def update_interface_with_faces(image_input):
+    image_bgr = cv2.cvtColor(np.array(image_input), cv2.COLOR_RGB2BGR)
+    faces = face_detecting(image_bgr)
+    face_crops = get_face_crops(image_bgr, faces)
+    return [(face, f"Face {i+1}") for i, face in enumerate(face_crops)]
+
 
 # Create the Gradio interface
 with gr.Blocks() as demo:
@@ -580,8 +586,10 @@ with gr.Blocks() as demo:
         inputs=[image_input] + checkboxes, 
         outputs=output_image
     )
-
-        
+    with gr.Row():
+        face_gallery = gr.Gallery(show_label=True)
+        detect_faces_btn = gr.Button("Show Faces in Order")
+        detect_faces_btn.click(process_and_show_faces, inputs=[image_input], outputs=[face_gallery])
     # Iterate over each category to create a row for the category
     for category, stickers in STICKER_PATHS.items():
         with gr.Row():
