@@ -480,6 +480,39 @@ def update_selections(category, selection):
 def load_example_image(image_path):
     return gr.Image.from_file(image_path)
 
+def get_face_crops(image_bgr, faces):
+    # Convert color space from BGR to RGB since OpenCV uses BGR by default
+    image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+    face_crops = []
+    for face in faces:
+        # Extract the region of interest (the face) from the original image
+        x, y, w, h = face.left(), face.top(), face.width(), face.height()
+        face_crop = image_rgb[y:y+h, x:x+w]
+        face_pil = Image.fromarray(face_crop)
+        face_crops.append(face_pil)
+    return face_crops
+
+# Function to process uploaded images and display face crops
+def process_and_show_faces(image_input):
+    # Convert PIL image to OpenCV format BGR
+    image_bgr = cv2.cvtColor(np.array(image_input), cv2.COLOR_RGB2BGR)
+    # Detect faces
+    faces = face_detecting(image_bgr)
+    # Get individual face crops
+    face_crops = get_face_crops(image_bgr, faces)
+    # Return face crops to display them in the interface
+    return face_crops
+
+# Inside your Gradio Blocks setup, after defining inputs and before the demo.launch()
+face_outputs = []
+for i in range(8):  # MAX_FACES is the maximum number of faces you expect
+    face_output = gr.Image(label=f"Face {i+1}")
+    face_outputs.append(face_output)
+
+
+
+
+
 # Create the Gradio interface
 with gr.Blocks() as demo:
     
@@ -489,6 +522,10 @@ with gr.Blocks() as demo:
         with gr.Column():
             output_image = gr.Image(label="Image with Stickers")
     
+    with gr.Row():
+        face_gallery = gr.Gallery(show_label=False)
+        detect_faces_btn = gr.Button("Detect Faces")
+        detect_faces_btn.click(process_and_show_faces, inputs=[image_input], outputs=[face_gallery])
 
         
     # Iterate over each category to create a row for the category
@@ -510,6 +547,7 @@ with gr.Blocks() as demo:
     # Button to apply all selected stickers
     apply_btn = gr.Button("Apply Stickers")
     apply_btn.click(process_image_with_selections, inputs=[image_input], outputs=output_image)
+
 
     # # List of example images
     # examples = [
