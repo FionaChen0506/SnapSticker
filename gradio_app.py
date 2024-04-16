@@ -80,21 +80,35 @@ def add_ears_sticker(img_bgr, sticker_path, faces):
         # the landmarks 68 to 80 are for the forehead
         forehead = [landmarks.part(i) for i in range(68, 81)]
 
+        # The landmarks 36 to 41 are for the left eye, and 42 to 47 are for the right eye
+        left_eye = [landmarks.part(i) for i in range(36, 42)]
+        right_eye = [landmarks.part(i) for i in range(42, 48)]
+
+        # Calculate the center point between the eyes
+        left_eye_center = ((left_eye[0].x + left_eye[3].x) // 2, (left_eye[0].y + left_eye[3].y) // 2)
+        right_eye_center = ((right_eye[0].x + right_eye[3].x) // 2, (right_eye[0].y + right_eye[3].y) // 2)
+
+        # Calculate the angle of tilt
+        dx = right_eye_center[0] - left_eye_center[0]
+        dy = right_eye_center[1] - left_eye_center[1]
+        angle = math.degrees(math.atan2(dy, dx))  
+
+
         # Calculate the bounding box for the ears based on the eye landmarks
-        ears_width = int(abs(forehead[0].x - forehead[-1].x) * 2) 
+        ears_width = int(abs(forehead[0].x - forehead[-1].x) * 2.1) 
         ears_height = int(ears_width * ears_bgra.height / ears_bgra.width)
 
         # Resize the ears image
         resized_ears_pil = ears_bgra.resize((ears_width, ears_height))
+        rotated_ears = resized_ears_pil.rotate(-angle, expand=True, resample=Image.BICUBIC)
         
         # Calculate the position for the ears
         y1 = min([point.y for point in forehead]) - int(0.6 * ears_width)
-        y2 = y1 + ears_height
         x1 = forehead[0].x - int(0.2 * ears_width) 
-        x2 = x1 + ears_width
 
         # Convert PIL image to NumPy array
-        ears_np = np.array(resized_ears_pil)
+        # ears_np = np.array(resized_ears_pil)
+        ears_np = np.array(rotated_ears)
         
         # Overlay the ears on the image
         img_with_stickers = overlay_transparent(img_with_stickers, ears_np, x1, y1)
@@ -118,7 +132,7 @@ def add_hats_sticker(img_bgr, sticker_path, faces):
     for face in faces:
         landmarks = face_landmarking(img_bgr, face)
 
-        #the landmarks 36 to 41 are for the left eye, and 42 to 47 are for the right eye
+        # The landmarks 36 to 41 are for the left eye, and 42 to 47 are for the right eye
         left_eye = [landmarks.part(i) for i in range(36, 42)]
         right_eye = [landmarks.part(i) for i in range(42, 48)]
 
@@ -128,20 +142,25 @@ def add_hats_sticker(img_bgr, sticker_path, faces):
         eye_center_x = (left_eye_center[0] + right_eye_center[0]) // 2
         eye_center_y = (left_eye_center[1] + right_eye_center[1]) // 2
 
+        # Calculate the angle of tilt
+        dx = right_eye_center[0] - left_eye_center[0]
+        dy = right_eye_center[1] - left_eye_center[1]
+        angle = math.degrees(math.atan2(dy, dx))  
+
         # Calculate the size of the hat based on the width between the eyes
-        hat_width = int(abs(left_eye[0].x - right_eye[3].x) * 1.5)
+        hat_width = int(abs(left_eye[0].x - right_eye[3].x) * 1.6)
         hat_height = int(hat_width * hat_bgra.height / hat_bgra.width)
 
-        # Resize the hat image
+        # Resize and rotate the hat image
         resized_hat = hat_bgra.resize((hat_width, hat_height))
+        rotated_hat = resized_hat.rotate(-0.8*angle, expand=True, resample=Image.BICUBIC)
 
         # Calculate the position for the hat
-        # y1 = eye_center_y - hat_height  # Placing the bottom of the hat at eye level
         y1 = eye_center_y - hat_height - int(0.3 * hat_height)
-        x1 = eye_center_x - (hat_width // 2)  # Centering the hat on the midpoint between the eyes
-
+        # x1 = eye_center_x - (hat_width // 2)  # Centering the hat on the midpoint between the eyes
+        x1 = eye_center_x - (hat_width // 2) - int(0.03 * hat_width)  # Moving the hat a bit further to the left
         # Convert PIL image to NumPy array
-        hat_np = np.array(resized_hat)
+        hat_np = np.array(rotated_hat)
 
         # Overlay the hat on the image
         img_with_stickers = overlay_transparent(img_with_stickers, hat_np, x1, y1)
