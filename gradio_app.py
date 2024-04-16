@@ -481,7 +481,31 @@ def update_selections(category, selection):
 def load_example_image(image_path):
     return gr.Image.from_file(image_path)
 
-def get_face_crops(image_bgr, faces):
+from PIL import Image
+
+def resize_image(image, target_width, target_height):
+    # Maintain aspect ratio
+    original_width, original_height = image.size
+    ratio = min(target_width/original_width, target_height/original_height)
+    new_width = int(original_width * ratio)
+    new_height = int(original_height * ratio)
+    # Use Image.LANCZOS for high-quality downsampling
+    resized_image = image.resize((new_width, new_height), Image.LANCZOS)
+    return resized_image
+
+def get_face_crops(image_bgr, faces, target_width=500, target_height=130):
+    face_crops = []
+    for face in faces:
+        x, y, w, h = face.left(), face.top(), face.width(), face.height()
+        face_crop = image_bgr[y:y+h, x:x+w]
+        face_pil = Image.fromarray(cv2.cvtColor(face_crop, cv2.COLOR_BGR2RGB))
+        # Resize image to fit the display while maintaining aspect ratio
+        resized_face = resize_image(face_pil, target_width, target_height)
+        face_crops.append(resized_face)
+    return face_crops
+
+
+def get_face_crops2(image_bgr, faces):
     # Convert color space from BGR to RGB since OpenCV uses BGR by default
     image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
     face_crops = []
@@ -523,7 +547,6 @@ def process_selected_faces(image_input, selected_face_indices):
     # Filter faces to get only those selected
     faces = [all_faces[i] for i in selected_face_indices]
 
-    # Continue with your existing code to apply stickers to the selected faces
     img_with_stickers = image_bgr.copy()
 
     for category, sticker_name in sticker_selections.items():
@@ -566,6 +589,19 @@ def update_interface_with_faces(image_input):
     face_crops = get_face_crops(image_bgr, faces)
     return [(face, f"Face {i+1}") for i, face in enumerate(face_crops)]
 
+def detect_and_display_faces(image_input):
+    image_bgr = cv2.cvtColor(np.array(image_input), cv2.COLOR_RGB2BGR)
+    faces = face_detecting(image_bgr)  
+    face_crops = get_face_crops(image_bgr, faces)  
+    if not face_crops:
+        # Return empty images and unchecked boxes if no faces are detected
+        return [None] * MAX_EXPECTED_FACES + [False] * MAX_EXPECTED_FACES
+    # Return face crops and True for each checkbox to indicate they should be checked
+    # Pad the list with None and False if fewer faces than MAX_EXPECTED_FACES are detected
+    output = face_crops + [None] * (MAX_EXPECTED_FACES - len(face_crops))
+    output += [True] * len(face_crops) + [False] * (MAX_EXPECTED_FACES - len(face_crops))
+    return output
+
 
 # Create the Gradio interface
 with gr.Blocks() as demo:
@@ -575,21 +611,42 @@ with gr.Blocks() as demo:
             image_input = gr.Image(type="pil", label="Original Image")
         with gr.Column():
             output_image = gr.Image(label="Image with Stickers")
+        # Prepare the checkboxes and image placeholders
+    detect_faces_btn = gr.Button("Detect Faces")
+    face_checkboxes = []
+    face_images = []
     
     with gr.Row():
-        checkboxes = [gr.Checkbox(label=f"Face {i+1}") for i in range(MAX_EXPECTED_FACES)]
+        for i in range(MAX_EXPECTED_FACES):  
+            with gr.Column(scale=1): 
+                checkbox = gr.Checkbox(label=f"Face {i+1}")  # Start as hidden
+                face_checkboxes.append(checkbox)
+    
+    # Row for Images
+    with gr.Row():
+        face_images = []
+        for i in range(MAX_EXPECTED_FACES):
+            with gr.Column(scale=1):  
+                image = gr.Image(height=100, width=100, min_width=30) 
+                face_images.append(image)
+                
+
+    detect_faces_btn.click(
+        detect_and_display_faces,
+        inputs=[image_input],
+        outputs=face_images + face_checkboxes  
+    )
+    # with gr.Row():
+    #     checkboxes = [gr.Checkbox(label=f"Face {i+1}") for i in range(MAX_EXPECTED_FACES)]
 
     process_button = gr.Button("Apply Stickers To Selected Faces")
 
     process_button.click(
         handle_face_selection, 
-        inputs=[image_input] + checkboxes, 
+        inputs=[image_input] + face_checkboxes, 
         outputs=output_image
     )
-    with gr.Row():
-        face_gallery = gr.Gallery(show_label=True)
-        detect_faces_btn = gr.Button("Show Faces in Order")
-        detect_faces_btn.click(process_and_show_faces, inputs=[image_input], outputs=[face_gallery])
+
     # Iterate over each category to create a row for the category
     for category, stickers in STICKER_PATHS.items():
         with gr.Row():
