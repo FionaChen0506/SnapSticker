@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image
 import dlib
 import os
+import math
 
 from constants import *
 
@@ -100,7 +101,7 @@ def add_ears_sticker(img_bgr, sticker_path, faces):
         
     return img_with_stickers
 
-# # Function to add hats stickers
+# Function to add hats stickers
 def add_hats_sticker(img_bgr, sticker_path, faces):
     hat_pil = Image.open(sticker_path)
 
@@ -147,8 +148,97 @@ def add_hats_sticker(img_bgr, sticker_path, faces):
 
     return img_with_stickers
 
+# # Function to add headbands stickers
+def add_headbands_sticker(img_bgr, sticker_path, faces):
+    headband_pil = Image.open(sticker_path)
+
+    # Check the color mode and convert to RGBA
+    headband_rgba = headband_pil.convert('RGBA')
+    
+    # Convert the headband_rgba to BGRA
+    r, g, b, a = headband_rgba.split()
+    headband_bgra = Image.merge("RGBA", (b, g, r, a))
+    
+    # A copy of the original image
+    img_with_stickers = img_bgr.copy()
+
+    for face in faces:
+        landmarks = face_landmarking(img_bgr, face)
+
+        #the landmarks 36 to 41 are for the left eye, and 42 to 47 are for the right eye
+        left_eye = [landmarks.part(i) for i in range(36, 42)]
+        right_eye = [landmarks.part(i) for i in range(42, 48)]
+
+        # Calculate the center point between the eyes
+        left_eye_center = ((left_eye[0].x + left_eye[3].x) // 2, (left_eye[0].y + left_eye[3].y) // 2)
+        right_eye_center = ((right_eye[0].x + right_eye[3].x) // 2, (right_eye[0].y + right_eye[3].y) // 2)
+        eye_center_x = (left_eye_center[0] + right_eye_center[0]) // 2
+        eye_center_y = (left_eye_center[1] + right_eye_center[1]) // 2
+
+        # Calculate the size of the headband based on the width between the eyes
+        headband_width = int(abs(left_eye[0].x - right_eye[3].x) * 1.8)
+        headband_height = int(headband_width * headband_bgra.height / headband_bgra.width)
+
+        # Resize the headband image
+        resized_headband = headband_bgra.resize((headband_width, headband_height))
+
+        # Calculate the position for the headband
+        # y1 = eye_center_y - headband_height  # Placing the bottom of the headband at eye level
+        y1 = eye_center_y - headband_height - int(0.3 * headband_height)
+        x1 = eye_center_x - (headband_width // 2)  # Centering the headband on the midpoint between the eyes
+
+        # Convert PIL image to NumPy array
+        headband_np = np.array(resized_headband)
+
+        # Overlay the headband on the image
+        img_with_stickers = overlay_transparent(img_with_stickers, headband_np, x1, y1)
+
+    return img_with_stickers
 
 # Function to add glasses stickers
+# def add_glasses_sticker(img_bgr, sticker_path, faces):
+#     glasses_pil = Image.open(sticker_path)
+
+#     # Check the color mode and convert to RGBA    
+#     glasses_rgba = glasses_pil.convert('RGBA')
+    
+#     # Convert the glasses_rgba to BGRA
+#     r, g, b, a = glasses_rgba.split()
+#     glasses_bgra = Image.merge("RGBA", (b, g, r, a))
+    
+
+#     # A copy of the original image
+#     img_with_stickers = img_bgr.copy()
+
+#     for face in faces:
+#         landmarks = face_landmarking(img_bgr, face)
+
+#         # the landmarks 36 to 41 are for the left eye, and 42 to 47 are for the right eye
+#         left_eye = [landmarks.part(i) for i in range(37, 43)]
+#         right_eye = [landmarks.part(i) for i in range(43, 49)]
+
+#         # Calculate the bounding box for the glasses based on the eye landmarks
+#         glasses_width = int(abs(left_eye[0].x - right_eye[3].x)*1.9)
+#         glasses_height = int(glasses_width * glasses_bgra.height / glasses_bgra.width)
+
+
+#         # Resize the glasses image
+#         resized_glasses = glasses_bgra.resize((glasses_width, glasses_height))
+        
+#         # Calculate the position for the glasses
+#         y1 = min([point.y for point in left_eye + right_eye]) - int(0.4 * glasses_height)
+#         y2 = y1 + glasses_height
+#         x1 = (left_eye[0].x) - int(0.2 * glasses_width)
+#         x2 = x1 + glasses_width
+
+#         # Convert PIL image to NumPy array
+#         glasses_np = np.array(resized_glasses)
+        
+#         # Overlay the glasses on the image
+#         img_with_stickers = overlay_transparent(img_with_stickers, glasses_np, x1, y1)
+        
+#     return img_with_stickers
+
 def add_glasses_sticker(img_bgr, sticker_path, faces):
     glasses_pil = Image.open(sticker_path)
 
@@ -159,7 +249,6 @@ def add_glasses_sticker(img_bgr, sticker_path, faces):
     r, g, b, a = glasses_rgba.split()
     glasses_bgra = Image.merge("RGBA", (b, g, r, a))
     
-
     # A copy of the original image
     img_with_stickers = img_bgr.copy()
 
@@ -167,25 +256,32 @@ def add_glasses_sticker(img_bgr, sticker_path, faces):
         landmarks = face_landmarking(img_bgr, face)
 
         # the landmarks 36 to 41 are for the left eye, and 42 to 47 are for the right eye
-        left_eye = [landmarks.part(i) for i in range(37, 43)]
-        right_eye = [landmarks.part(i) for i in range(43, 49)]
+        left_eye = [landmarks.part(i) for i in range(36, 42)]
+        right_eye = [landmarks.part(i) for i in range(42, 48)]
+
+        # Calculate the center points of the eyes
+        left_eye_center = (sum([p.x for p in left_eye]) // len(left_eye), sum([p.y for p in left_eye]) // len(left_eye))
+        right_eye_center = (sum([p.x for p in right_eye]) // len(right_eye), sum([p.y for p in right_eye]) // len(right_eye))
+
+        # Calculate the angle of tilt
+        dx = right_eye_center[0] - left_eye_center[0]
+        dy = right_eye_center[1] - left_eye_center[1]
+        angle = math.degrees(math.atan2(dy, dx))  # Angle in degrees
 
         # Calculate the bounding box for the glasses based on the eye landmarks
-        glasses_width = int(abs(left_eye[0].x - right_eye[3].x)*1.9)
+        glasses_width = int(abs(left_eye_center[0] - right_eye_center[0]) * 2)
         glasses_height = int(glasses_width * glasses_bgra.height / glasses_bgra.width)
 
-
-        # Resize the glasses image
+        # Resize and rotate the glasses image
         resized_glasses = glasses_bgra.resize((glasses_width, glasses_height))
-        
-        # Calculate the position for the glasses
-        y1 = min([point.y for point in left_eye + right_eye]) - int(0.4 * glasses_height)
-        y2 = y1 + glasses_height
-        x1 = (left_eye[0].x) - int(0.2 * glasses_width)
-        x2 = x1 + glasses_width
+        rotated_glasses = resized_glasses.rotate(-0.8*angle, expand=True, resample=Image.BICUBIC)  # Negative angle to correct orientation
+
+        # Calculate the position for the glasses, adjusting for the rotation
+        x1 = left_eye_center[0] - int(0.25 * glasses_width)
+        y1 = min(left_eye_center[1], right_eye_center[1]) - int(0.45 * glasses_height)
 
         # Convert PIL image to NumPy array
-        glasses_np = np.array(resized_glasses)
+        glasses_np = np.array(rotated_glasses)
         
         # Overlay the glasses on the image
         img_with_stickers = overlay_transparent(img_with_stickers, glasses_np, x1, y1)
@@ -268,11 +364,6 @@ def process_image(image, sticker_choice):
         return image
 
 def process_image_with_selections(image_input):
-    # print("Selected stickers:")
-    # for category, selection in sticker_selections.items():
-    #     print(f"{category}: {selection}")
-
-    # return image
     # Convert PIL image to OpenCV format BGR
     image_bgr = cv2.cvtColor(np.array(image_input), cv2.COLOR_RGB2BGR)
 
@@ -295,7 +386,7 @@ def process_image_with_selections(image_input):
             elif category == 'noses':
                 img_with_stickers = add_noses_sticker(img_with_stickers, sticker_path, faces)
             elif category == 'headbands':
-                img_with_stickers = add_ears_sticker(img_with_stickers, sticker_path, faces)
+                img_with_stickers = add_hats_sticker(img_with_stickers, sticker_path, faces)
             elif category == 'hats':
                 img_with_stickers = add_hats_sticker(img_with_stickers, sticker_path, faces)
             elif category == 'animal face':
