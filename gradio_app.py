@@ -312,20 +312,38 @@ def add_noses_sticker(img_bgr, sticker_path, faces):
         nose_area = [landmarks.part(i) for i in range(27, 36)]
 
         # Calculate the bounding box for the nose based on the nose landmarks
-        nose_width = int(abs(nose_area[0].x - nose_area[-1].x) * 1.8)
+        nose_width = int(abs(nose_area[0].x - nose_area[-1].x) * 2.1)
         nose_height = int(nose_width * nose_bgra.height / nose_bgra.width)
+
+        # the landmarks 31 and 35 are the leftmost and rightmost points of the nose area
+        nose_left = landmarks.part(31)
+        nose_right = landmarks.part(35)
+
+        # Calculate the center point of the nose
+        nose_center_x = (nose_left.x + nose_right.x) // 2
+
+        nose_top = landmarks.part(27)  # Use 28 if it's more accurate for your model
+        nose_bottom = landmarks.part(33)
+
+        # Calculate the midpoint of the vertical length of the nose
+        nose_center_y = (nose_top.y + nose_bottom.y) // 2
+
+        # Calculate the angle of tilt using the eyes as reference
+        left_eye_indices = range(36, 42)
+        right_eye_indices = range(42, 48)
+        angle = calculate_eye_angle(landmarks, left_eye_indices, right_eye_indices)
 
         # Resize the nose image
         resized_nose_pil = nose_bgra.resize((nose_width, nose_height))
-        
-        # Calculate the position for the nose
-        y1 = min([point.y for point in nose_area]) + int(0.3 * nose_height)
-        y2 = y1 + nose_height
-        x1 = min([point.x for point in nose_area]) - int(0.1 * nose_width)
-        x2 = x1 + nose_width
 
+        rotated_nose = resized_nose_pil.rotate(-angle, expand=True, resample=Image.BICUBIC)
+
+
+        # the position for the nose
+        x1 = nose_center_x - (nose_width // 2)
+        y1 = nose_center_y - (nose_height // 2)+ int(0.1 * nose_height)  # Adding a slight downward offset
         # Convert PIL image to NumPy array
-        nose_np = np.array(resized_nose_pil)
+        nose_np = np.array(rotated_nose)
         
         # Overlay the nose on the image
         img_with_stickers = overlay_transparent(img_with_stickers, nose_np, x1, y1)
