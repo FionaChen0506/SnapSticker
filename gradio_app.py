@@ -8,6 +8,7 @@ import math
 
 from constants import *
 
+MAX_EXPECTED_FACES=7
 # get a list of faces in the image
 def face_detecting(image):
     detector = dlib.get_frontal_face_detector()
@@ -322,7 +323,7 @@ def add_noses_sticker(img_bgr, sticker_path, faces):
         # Calculate the center point of the nose
         nose_center_x = (nose_left.x + nose_right.x) // 2
 
-        nose_top = landmarks.part(27)  # Use 28 if it's more accurate for your model
+        nose_top = landmarks.part(27)  # Use 28 if it's more accurate 
         nose_bottom = landmarks.part(33)
 
         # Calculate the midpoint of the vertical length of the nose
@@ -503,14 +504,61 @@ def process_and_show_faces(image_input):
     # Return face crops to display them in the interface
     return face_crops
 
-# Inside your Gradio Blocks setup, after defining inputs and before the demo.launch()
+
 face_outputs = []
-for i in range(8):  # MAX_FACES is the maximum number of faces you expect
+for i in range(MAX_EXPECTED_FACES):
     face_output = gr.Image(label=f"Face {i+1}")
     face_outputs.append(face_output)
 
+# This list will hold the Checkbox components for each face
+checkboxes = []
 
+def process_selected_faces(image_input, selected_face_indices):
+    # Convert PIL image to OpenCV format BGR
+    image_bgr = cv2.cvtColor(np.array(image_input), cv2.COLOR_RGB2BGR)
 
+    # Detect all faces
+    all_faces = face_detecting(image_bgr)
+
+    # Filter faces to get only those selected
+    faces = [all_faces[i] for i in selected_face_indices]
+
+    # Continue with your existing code to apply stickers to the selected faces
+    img_with_stickers = image_bgr.copy()
+
+    for category, sticker_name in sticker_selections.items():
+        if sticker_name:  # Check if a sticker was selected in this category
+            # the sticker file path
+            sticker_path = os.path.join('stickers', category, sticker_name + '.png')
+
+            # Apply the selected sticker based on its category
+            if category == 'ears':
+                img_with_stickers = add_ears_sticker(img_with_stickers, sticker_path, faces)
+            elif category == 'glasses':
+                img_with_stickers = add_glasses_sticker(img_with_stickers, sticker_path, faces)
+            elif category == 'noses':
+                img_with_stickers = add_noses_sticker(img_with_stickers, sticker_path, faces)
+            elif category == 'headbands':
+                img_with_stickers = add_hats_sticker(img_with_stickers, sticker_path, faces)
+            elif category == 'hats':
+                img_with_stickers = add_hats_sticker(img_with_stickers, sticker_path, faces)
+            elif category == 'animal face':
+                img_with_stickers = add_animal_faces_sticker(img_with_stickers, sticker_path, faces)
+            else:
+                img_with_stickers = img_with_stickers
+    # Convert back to PIL image
+    img_with_stickers_pil = Image.fromarray(cv2.cvtColor(img_with_stickers, cv2.COLOR_BGR2RGB))
+    
+    print("Selected stickers:")
+    for category, selection in sticker_selections.items():
+        print(f"{category}: {selection}")
+
+    return img_with_stickers_pil
+
+def handle_face_selection(image_input, *checkbox_states):
+    selected_face_indices = [i for i, checked in enumerate(checkbox_states) if checked]
+    print("selected_face_indices:",selected_face_indices)
+    return process_selected_faces(image_input, selected_face_indices)
 
 
 # Create the Gradio interface
@@ -523,9 +571,15 @@ with gr.Blocks() as demo:
             output_image = gr.Image(label="Image with Stickers")
     
     with gr.Row():
-        face_gallery = gr.Gallery(show_label=False)
-        detect_faces_btn = gr.Button("Detect Faces")
-        detect_faces_btn.click(process_and_show_faces, inputs=[image_input], outputs=[face_gallery])
+        checkboxes = [gr.Checkbox(label=f"Face {i+1}") for i in range(MAX_EXPECTED_FACES)]
+
+    process_button = gr.Button("Apply Stickers To Selected Faces")
+
+    process_button.click(
+        handle_face_selection, 
+        inputs=[image_input] + checkboxes, 
+        outputs=output_image
+    )
 
         
     # Iterate over each category to create a row for the category
@@ -545,9 +599,8 @@ with gr.Blocks() as demo:
                     radio = gr.Radio(label=' ', choices=choices, value="None", container=False, min_width=50)
                     radio.change(lambda selection, cat=category: update_selections(cat, selection), inputs=[radio], outputs=[])
     # Button to apply all selected stickers
-    apply_btn = gr.Button("Apply Stickers")
+    apply_btn = gr.Button("Apply Stickers To All")
     apply_btn.click(process_image_with_selections, inputs=[image_input], outputs=output_image)
-
 
     # # List of example images
     # examples = [
