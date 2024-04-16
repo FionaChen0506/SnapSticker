@@ -613,31 +613,18 @@ with gr.Blocks() as demo:
             output_image = gr.Image(label="Image with Stickers")
         # Prepare the checkboxes and image placeholders
     detect_faces_btn = gr.Button("Detect Faces")
-    face_checkboxes = []
-    face_images = []
-    
-    with gr.Row():
-        for i in range(MAX_EXPECTED_FACES):  
-            with gr.Column(scale=1): 
-                checkbox = gr.Checkbox(label=f"Face {i+1}")  # Start as hidden
-                face_checkboxes.append(checkbox)
-    
-    # Row for Images
-    with gr.Row():
-        face_images = []
-        for i in range(MAX_EXPECTED_FACES):
-            with gr.Column(scale=1):  
-                image = gr.Image(height=100, width=100, min_width=30) 
-                face_images.append(image)
-                
 
+    with gr.Row():
+        face_checkboxes = [gr.Checkbox(label=f"Face {i+1}") for i in range(7)]
+
+    with gr.Row():
+        face_images = [gr.Image(height=150, width=100, min_width=30) for i in range(7)]
+    
     detect_faces_btn.click(
         detect_and_display_faces,
         inputs=[image_input],
         outputs=face_images + face_checkboxes  
     )
-    # with gr.Row():
-    #     checkboxes = [gr.Checkbox(label=f"Face {i+1}") for i in range(MAX_EXPECTED_FACES)]
 
     process_button = gr.Button("Apply Stickers To Selected Faces")
 
