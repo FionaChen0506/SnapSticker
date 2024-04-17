@@ -616,6 +616,10 @@ css = """
     width: 30px;
     padding: 10px;
 }
+.radio {
+    display: flex;
+    justify-content: space-around;
+}
 """
 
 # Create the Gradio interface
@@ -633,7 +637,7 @@ with gr.Blocks(css=css) as demo:
         face_checkboxes = [gr.Checkbox(label=f"Face {i+1}") for i in range(7)]
 
     with gr.Row():
-        face_images = [gr.Image(height=150, width=100, min_width=30) for i in range(7)]
+        face_images = [gr.Image(height=150, width=100, min_width=30, interactive=False, show_download_button=False) for i in range(7)]
     
     detect_faces_btn.click(
         detect_and_display_faces,
@@ -663,7 +667,7 @@ with gr.Blocks(css=css) as demo:
                 with gr.Row():
                     # radio = gr.Radio(label=' ', choices=[stickers[i].split('/')[-1].replace('.png', '') for i in range(len(stickers))], container=False, min_width=50)
                     choices = [sticker.split('/')[-1].replace('.png', '') for sticker in stickers]
-                    radio = gr.Radio(label=' ', choices=choices, value="None", container=False, min_width=50, elem_id="radio")
+                    radio = gr.Radio(label='', choices=choices, value="None", container=False, min_width=50, elem_classes="radio")
                     radio.change(lambda selection, cat=category: update_selections(cat, selection), inputs=[radio], outputs=[])
     # Button to apply all selected stickers
     apply_btn = gr.Button("Apply Stickers To All")
