@@ -378,8 +378,8 @@ def add_animal_faces_sticker(img_bgr, sticker_path, faces):
         eye_center_y = (left_eye[3].y + right_eye[0].y) // 2
 
         # Calculate the size of the animal face sticker based on the width between the temples
-        head_width = int(abs(landmarks.part(0).x - landmarks.part(16).x)*1.1) #1.5
-        head_height = int(head_width * animal_face_bgra.height / animal_face_bgra.width)
+        head_width = int(abs(landmarks.part(0).x - landmarks.part(16).x)*1.5) #1.5
+        head_height = int(head_width * animal_face_bgra.height *1.2 / animal_face_bgra.width)
 
         # Resize the animal face sticker
         resized_animal_face = animal_face_bgra.resize((head_width, head_height))
@@ -669,19 +669,9 @@ with gr.Blocks(css=css) as demo:
                     choices = [sticker.split('/')[-1].replace('.png', '') for sticker in stickers]
                     radio = gr.Radio(label='', choices=choices, value="None", container=False, min_width=50, elem_classes="radio")
                     radio.change(lambda selection, cat=category: update_selections(cat, selection), inputs=[radio], outputs=[])
-    # Button to apply all selected stickers
-    apply_btn = gr.Button("Apply Stickers To All")
-    apply_btn.click(process_image_with_selections, inputs=[image_input], outputs=output_image)
 
-    # # List of example images
-    # examples = [
-    #     ["./example_images/Herminone.jpg"],
-    #     ["./example_images/3-people.jpg"],
-    #     ["./example_images/multi.png"]
-    # ]
 
-    # # Adding an Examples component to allow users to load example images
-    # demo.examples(examples, inputs=[image_input])
+
 demo.launch()
 
 
