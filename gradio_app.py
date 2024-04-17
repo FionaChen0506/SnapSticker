@@ -603,8 +603,22 @@ def detect_and_display_faces(image_input):
     return output
 
 
+css = """
+#category {
+    padding-left: 100px;
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+#sticker {
+    height: 130px;
+    width: 30px;
+}
+"""
+
 # Create the Gradio interface
-with gr.Blocks() as demo:
+with gr.Blocks(css=css) as demo:
     
     with gr.Row():
         with gr.Column():
@@ -637,18 +651,18 @@ with gr.Blocks() as demo:
     # Iterate over each category to create a row for the category
     for category, stickers in STICKER_PATHS.items():
         with gr.Row():
-            with gr.Column(scale=1):
-                gr.Markdown(f"## {category}")  # Category label
+            with gr.Column(scale=1, elem_id="category_row"):
+                gr.Markdown(f"## {category}", elem_id="category")
             with gr.Column(scale=10):      
                 # Iterate over stickers in sets of 10
                 for i in range(0, len(stickers), 10):
                     with gr.Row():
                         for sticker_path in stickers[i:i+10]:
-                            gr.Image(value=sticker_path, height=130, width=500, min_width=30, interactive=False, show_download_button=False, container=False)  # Sticker image
+                            gr.Image(value=sticker_path, min_width=30, interactive=False, show_download_button=False, container=False, elem_id="sticker")
                 with gr.Row():
                     # radio = gr.Radio(label=' ', choices=[stickers[i].split('/')[-1].replace('.png', '') for i in range(len(stickers))], container=False, min_width=50)
-                    choices = ["None"] + [sticker.split('/')[-1].replace('.png', '') for sticker in stickers]
-                    radio = gr.Radio(label=' ', choices=choices, value="None", container=False, min_width=50)
+                    choices = [sticker.split('/')[-1].replace('.png', '') for sticker in stickers]
+                    radio = gr.Radio(label=' ', choices=choices, value="None", container=False, min_width=50, elem_id="radio")
                     radio.change(lambda selection, cat=category: update_selections(cat, selection), inputs=[radio], outputs=[])
     # Button to apply all selected stickers
     apply_btn = gr.Button("Apply Stickers To All")
