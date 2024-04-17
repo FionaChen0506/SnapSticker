@@ -614,6 +614,7 @@ css = """
 #sticker {
     height: 130px;
     width: 30px;
+    padding: 10px;
 }
 """
 
@@ -658,7 +659,7 @@ with gr.Blocks(css=css) as demo:
                 for i in range(0, len(stickers), 10):
                     with gr.Row():
                         for sticker_path in stickers[i:i+10]:
-                            gr.Image(value=sticker_path, min_width=30, interactive=False, show_download_button=False, container=False, elem_id="sticker")
+                            gr.Image(value=sticker_path, min_width=50, interactive=False, show_download_button=False, container=False, elem_id="sticker")
                 with gr.Row():
                     # radio = gr.Radio(label=' ', choices=[stickers[i].split('/')[-1].replace('.png', '') for i in range(len(stickers))], container=False, min_width=50)
                     choices = [sticker.split('/')[-1].replace('.png', '') for sticker in stickers]
