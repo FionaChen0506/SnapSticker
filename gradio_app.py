@@ -161,6 +161,8 @@ def add_hats_sticker(img_bgr, sticker_path, faces):
         left_eye = [landmarks.part(i) for i in range(36, 42)]
         right_eye = [landmarks.part(i) for i in range(42, 48)]
 
+        forehead = [landmarks.part(i) for i in range(68, 81)]
+
         # Calculate the center point between the eyes
         left_eye_center = ((left_eye[0].x + left_eye[3].x) // 2, (left_eye[0].y + left_eye[3].y) // 2)
         right_eye_center = ((right_eye[0].x + right_eye[3].x) // 2, (right_eye[0].y + right_eye[3].y) // 2)
@@ -173,17 +175,19 @@ def add_hats_sticker(img_bgr, sticker_path, faces):
         angle = math.degrees(math.atan2(dy, dx))  
 
         # Calculate the size of the hat based on the width between the eyes
-        hat_width = int(abs(left_eye[0].x - right_eye[3].x) * 1.7)
+        hat_width = int(abs(left_eye[0].x - right_eye[3].x) * 1.75)
         hat_height = int(hat_width * hat_bgra.height / hat_bgra.width)
 
         # Resize and rotate the hat image
         resized_hat = hat_bgra.resize((hat_width, hat_height))
         rotated_hat = resized_hat.rotate(-0.8*angle, expand=True, resample=Image.BICUBIC)
+        
 
         # Calculate the position for the hat
         y1 = eye_center_y - hat_height - int(0.3 * hat_height)
         # x1 = eye_center_x - (hat_width // 2)  # Centering the hat on the midpoint between the eyes
-        x1 = eye_center_x - (hat_width // 2) - int(0.03 * hat_width)  # Moving the hat a bit further to the left
+        # x1 = eye_center_x - (hat_width // 2) - int(0.03 * hat_width)  # Moving the hat a bit further to the left
+        x1 = forehead[0].x - int(0.2 * hat_width) 
         # Convert PIL image to NumPy array
         hat_np = np.array(rotated_hat)
 
@@ -378,18 +382,27 @@ def add_animal_faces_sticker(img_bgr, sticker_path, faces):
         eye_center_y = (left_eye[3].y + right_eye[0].y) // 2
 
         # Calculate the size of the animal face sticker based on the width between the temples
-        head_width = int(abs(landmarks.part(0).x - landmarks.part(16).x)*1.5) #1.5
+        head_width = int(abs(landmarks.part(0).x - landmarks.part(16).x)*1.4) 
         head_height = int(head_width * animal_face_bgra.height *1.2 / animal_face_bgra.width)
+
+
+        # Calculate the angle of tilt using the eyes as reference
+        left_eye_indices = range(36, 42)
+        right_eye_indices = range(42, 48)
+        angle = calculate_eye_angle(landmarks, left_eye_indices, right_eye_indices)
 
         # Resize the animal face sticker
         resized_animal_face = animal_face_bgra.resize((head_width, head_height))
+
+        rotated_animal_face = resized_animal_face.rotate(-angle, expand=True, resample=Image.BICUBIC)
+
 
         # Calculate the position for the animal face sticker
         x1 = eye_center_x - (head_width // 2)
         y1 = forehead_top - int(0.18 * head_height)
 
         # Convert PIL image to NumPy array
-        animal_face_np = np.array(resized_animal_face)
+        animal_face_np = np.array(rotated_animal_face)
 
         # Overlay the animal face on the image
         img_with_stickers = overlay_transparent(img_with_stickers, animal_face_np, x1, y1)
