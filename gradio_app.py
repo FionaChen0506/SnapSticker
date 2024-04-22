@@ -196,54 +196,6 @@ def add_hats_sticker(img_bgr, sticker_path, faces):
 
     return img_with_stickers
 
-def add_headbands_sticker(img_bgr, sticker_path, faces):
-    headband_pil = Image.open(sticker_path)
-
-    # Check the color mode and convert to RGBA
-    headband_rgba = headband_pil.convert('RGBA')
-    
-    # Convert the headband_rgba to BGRA
-    r, g, b, a = headband_rgba.split()
-    headband_bgra = Image.merge("RGBA", (b, g, r, a))
-    
-    # A copy of the original image
-    img_with_stickers = img_bgr.copy()
-
-    for face in faces:
-        landmarks = face_landmarking(img_bgr, face)
-
-        # Determine the forehead region using landmarks
-        # Assuming the headband will be placed between the temples
-        left_temple = landmarks.part(0)   
-        right_temple = landmarks.part(16) 
-
-        # Calculate the width of the headband based on the temples
-        headband_width = int(abs(left_temple.x - right_temple.x) * 1.6)
-        headband_height = int(headband_width * headband_bgra.height / headband_bgra.width)
-
-        # Resize the headband image
-        resized_headband = headband_bgra.resize((headband_width, headband_height))
-
-        # Calculate the angle of tilt using the eyes as reference
-        left_eye_indices = range(36, 42)
-        right_eye_indices = range(42, 48)
-        angle = calculate_eye_angle(landmarks, left_eye_indices, right_eye_indices)
-
-        # Rotate the headband image
-        rotated_headband = resized_headband.rotate(-angle, expand=True, resample=Image.BICUBIC)
-
-        # Calculate the position for the headband
-        x1 = (left_temple.x + right_temple.x) // 2 - (headband_width // 2)
-        y1 = left_temple.y - (headband_height // 2) 
-
-        # Convert PIL image to NumPy array
-        headband_np = np.array(rotated_headband)
-
-        # Overlay the headband on the image
-        img_with_stickers = overlay_transparent(img_with_stickers, headband_np, x1, y1)
-
-    return img_with_stickers
-
 
 # Function to add glasses stickers
 def add_glasses_sticker(img_bgr, sticker_path, faces):
@@ -410,77 +362,6 @@ def add_animal_faces_sticker(img_bgr, sticker_path, faces):
     return img_with_stickers
 
 
-# Function to process the image
-def process_image(image, sticker_choice):
-    if sticker_choice:
-        # add .png to the sticker_choice
-        sticker_name = sticker_choice + '.png'
-        # find sticker's category
-        sticker_category = STICKER_TO_CATEGORY[sticker_name]
-        # Path to the single sticker
-        sticker_path = os.path.join('stickers',sticker_category, sticker_name)
-
-        # Convert PIL image to OpenCV format BGR
-        image_bgr = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-
-        # Detect faces
-        faces = face_detecting(image_bgr)
-        # print(sticker_category)
-        if sticker_category == 'ears':
-            img_with_stickers = add_ears_sticker(image_bgr, sticker_path, faces)
-        elif sticker_category == 'glasses':
-            img_with_stickers = add_glasses_sticker(image_bgr, sticker_path, faces)
-        elif sticker_category == 'noses':
-            img_with_stickers = add_noses_sticker(image_bgr, sticker_path, faces)
-        elif sticker_category == 'headbands':
-            img_with_stickers = add_ears_sticker(image_bgr, sticker_path, faces)
-        else:
-            img_with_stickers = add_glasses_sticker(image_bgr, sticker_path, faces)
-        # Convert back to PIL image
-        img_with_stickers_pil = Image.fromarray(cv2.cvtColor(img_with_stickers, cv2.COLOR_BGR2RGB))
-        return img_with_stickers_pil
-    else:
-        return image
-
-def process_image_with_selections(image_input):
-    # Convert PIL image to OpenCV format BGR
-    image_bgr = cv2.cvtColor(np.array(image_input), cv2.COLOR_RGB2BGR)
-
-    # Detect faces
-    faces = face_detecting(image_bgr)
-    
-    # A copy of the original image to apply stickers on
-    img_with_stickers = image_bgr.copy()
-
-    for category, sticker_name in sticker_selections.items():
-        if sticker_name:  # Check if a sticker was selected in this category
-            # the sticker file path
-            sticker_path = os.path.join('stickers', category, sticker_name + '.png')
-
-            # Apply the selected sticker based on its category
-            if category == 'ears':
-                img_with_stickers = add_ears_sticker(img_with_stickers, sticker_path, faces)
-            elif category == 'glasses':
-                img_with_stickers = add_glasses_sticker(img_with_stickers, sticker_path, faces)
-            elif category == 'noses':
-                img_with_stickers = add_noses_sticker(img_with_stickers, sticker_path, faces)
-            elif category == 'headbands':
-                img_with_stickers = add_hats_sticker(img_with_stickers, sticker_path, faces)
-            elif category == 'hats':
-                img_with_stickers = add_hats_sticker(img_with_stickers, sticker_path, faces)
-            elif category == 'animal face':
-                img_with_stickers = add_animal_faces_sticker(img_with_stickers, sticker_path, faces)
-            else:
-                img_with_stickers = img_with_stickers
-    # Convert back to PIL image
-    img_with_stickers_pil = Image.fromarray(cv2.cvtColor(img_with_stickers, cv2.COLOR_BGR2RGB))
-    
-    print("Selected stickers:")
-    for category, selection in sticker_selections.items():
-        print(f"{category}: {selection}")
-
-    return img_with_stickers_pil
-
 # This dictionary will hold the user's sticker selections
 sticker_selections = {}
 
@@ -494,7 +375,6 @@ def update_selections(category, selection):
 def load_example_image(image_path):
     return gr.Image.from_file(image_path)
 
-from PIL import Image
 
 def resize_image(image, target_width, target_height):
     # Maintain aspect ratio
@@ -518,17 +398,6 @@ def get_face_crops(image_bgr, faces, target_width=500, target_height=130):
     return face_crops
 
 
-def get_face_crops2(image_bgr, faces):
-    # Convert color space from BGR to RGB since OpenCV uses BGR by default
-    image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
-    face_crops = []
-    for face in faces:
-        # Extract the region of interest (the face) from the original image
-        x, y, w, h = face.left(), face.top(), face.width(), face.height()
-        face_crop = image_rgb[y:y+h, x:x+w]
-        face_pil = Image.fromarray(face_crop)
-        face_crops.append(face_pil)
-    return face_crops
 
 # Function to process uploaded images and display face crops
 def process_and_show_faces(image_input):
@@ -634,6 +503,7 @@ css = """
     justify-content: space-around;
 }
 """
+
 
 # Create the Gradio interface
 with gr.Blocks(css=css) as demo:
