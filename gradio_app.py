@@ -363,11 +363,10 @@ def add_animal_faces_sticker(img_bgr, sticker_path, faces):
 
 
 # This dictionary will hold the user's sticker selections
-sticker_selections = {}
+# sticker_selections = {}
 
 # Function to update sticker selections
 def update_selections(category, selection):
-    # sticker_selections[category] = selection
     sticker_selections[category] = None if selection == "None" else selection
     return ""
 
@@ -434,23 +433,24 @@ def process_selected_faces(image_input, selected_face_indices):
     for category, sticker_name in sticker_selections.items():
         if sticker_name:  # Check if a sticker was selected in this category
             # the sticker file path
-            sticker_path = os.path.join('stickers', category, sticker_name + '.png')
+            if sticker_name != 'None':
+                sticker_path = os.path.join('stickers', category, sticker_name + '.png')
 
-            # Apply the selected sticker based on its category
-            if category == 'ears':
-                img_with_stickers = add_ears_sticker(img_with_stickers, sticker_path, faces)
-            elif category == 'glasses':
-                img_with_stickers = add_glasses_sticker(img_with_stickers, sticker_path, faces)
-            elif category == 'noses':
-                img_with_stickers = add_noses_sticker(img_with_stickers, sticker_path, faces)
-            elif category == 'headbands':
-                img_with_stickers = add_hats_sticker(img_with_stickers, sticker_path, faces)
-            elif category == 'hats':
-                img_with_stickers = add_hats_sticker(img_with_stickers, sticker_path, faces)
-            elif category == 'animal face':
-                img_with_stickers = add_animal_faces_sticker(img_with_stickers, sticker_path, faces)
-            else:
-                img_with_stickers = img_with_stickers
+                # Apply the selected sticker based on its category
+                if category == 'ears':
+                    img_with_stickers = add_ears_sticker(img_with_stickers, sticker_path, faces)
+                elif category == 'glasses':
+                    img_with_stickers = add_glasses_sticker(img_with_stickers, sticker_path, faces)
+                elif category == 'noses':
+                    img_with_stickers = add_noses_sticker(img_with_stickers, sticker_path, faces)
+                elif category == 'headbands':
+                    img_with_stickers = add_hats_sticker(img_with_stickers, sticker_path, faces)
+                elif category == 'hats':
+                    img_with_stickers = add_hats_sticker(img_with_stickers, sticker_path, faces)
+                elif category == 'animal face':
+                    img_with_stickers = add_animal_faces_sticker(img_with_stickers, sticker_path, faces)
+                else:
+                    img_with_stickers = img_with_stickers
     # Convert back to PIL image
     img_with_stickers_pil = Image.fromarray(cv2.cvtColor(img_with_stickers, cv2.COLOR_BGR2RGB))
     
@@ -504,16 +504,44 @@ css = """
 }
 """
 
+def handle_image_upload(image):
+    global sticker_selections
+    sticker_selections = {category: "None" for category in STICKER_PATHS.keys()}
+    print("reset sticker_selections called") # Reset selections when a new image is loaded
+    # Print out the sticker selections state for each category
+    for category, selection in sticker_selections.items():
+        print(f"{category}: {selection}")
+    return image
 
+# Initialize the sticker selections dictionary
+def initialize_sticker_selections():
+    return {
+        'hats': None,
+        'animal face': None,
+        'ears': None,
+        'glasses': None,
+        'noses': None,
+        'headbands': None
+    }
+
+
+sticker_selections = initialize_sticker_selections()
+radio_components = {}
 # Create the Gradio interface
 with gr.Blocks(css=css) as demo:
     
     with gr.Row():
         with gr.Column():
             image_input = gr.Image(type="pil", label="Original Image")
+            image_input.change(
+            handle_image_upload,
+            inputs=[image_input],
+            outputs=[image_input]
+            )
         with gr.Column():
             output_image = gr.Image(label="Image with Stickers")
         # Prepare the checkboxes and image placeholders
+
     detect_faces_btn = gr.Button("Detect Faces")
 
     with gr.Row():
@@ -531,7 +559,8 @@ with gr.Blocks(css=css) as demo:
     process_button = gr.Button("Apply Stickers To Selected Faces")
 
     process_button.click(
-        handle_face_selection, 
+        handle_face_selection,
+        # inputs=[image_input, face_checkboxes, sticker_selections], 
         inputs=[image_input] + face_checkboxes, 
         outputs=output_image
     )
@@ -552,7 +581,7 @@ with gr.Blocks(css=css) as demo:
                     choices = [sticker.split('/')[-1].replace('.png', '') for sticker in stickers]
                     radio = gr.Radio(label='', choices=choices, value="None", container=False, min_width=50, elem_classes="radio")
                     radio.change(lambda selection, cat=category: update_selections(cat, selection), inputs=[radio], outputs=[])
-
+                    radio_components[category] = radio  # Store the radio component
 
 
 demo.launch()
