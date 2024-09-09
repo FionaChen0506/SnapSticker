@@ -36,6 +36,17 @@ SnapSticker is an advanced image processing application that allows users to enh
 5. **Download the edited image:**
     - Once satisfied with the customization, download the image.
   
+## Example Usage
+- An example of one person's photo with two types of stickers applied.
+  ![1 person Screenshot](./readmePics/1person.png)
+- An example of a group photo with three people, where one person's head is tilted, two faces are selected, and three types of stickers are applied.
+  ![3 people Screenshot](./readmePics/3people.png)
+- An example of a group photo with seven people, where some faces are tilted, some are larger while others are smaller, and some individuals have beards or hats. Three types of stickers are applied.
+  ![7 people Screenshot](./readmePics/7people.png)
+- Stickers Library
+  ![stickers Screenshot](./readmePics/StickersLibrary.png)
+- User-Friendly Interactive Interface
+  ![Home Screenshot](./readmePics/Home1.png)
 
 ## Sticker Library
 
